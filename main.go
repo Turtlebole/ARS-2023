@@ -29,6 +29,9 @@ func main() {
 		data: map[string]*Config{},
 	}
 	routerChan.HandleFunc("/config/", server.createPostHandler).Methods("POST")
+	routerChan.HandleFunc("/configs/", server.getAllHandler).Methods("GET")
+	routerChan.HandleFunc("/config/{id}/", server.getPostHandler).Methods("GET")
+	routerChan.HandleFunc("/config/{id}/", server.delPostHandler).Methods("DELETE")
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: routerChan}
