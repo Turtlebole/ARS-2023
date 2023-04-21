@@ -4,7 +4,6 @@ import (
 	"errors"
 	"mime"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 
