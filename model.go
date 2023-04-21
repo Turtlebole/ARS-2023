@@ -6,5 +6,5 @@ type Config struct {
 }
 
 type Service struct {
-	Data map[string]*Config `json:"data"`
+	Data map[string]*Config
 }
