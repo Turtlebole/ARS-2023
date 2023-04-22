@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func decodeBody(r io.Reader) (*Config, error) {
@@ -26,4 +28,7 @@ func renderJSON(w http.ResponseWriter, v interface{}) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
+}
+func createId() string {
+	return uuid.New().String()
 }

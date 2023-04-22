@@ -9,12 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
 	"github.com/gorilla/mux"
 )
-
-type Service struct {
-	Data map[string]*Config
-}
 
 func main() {
 	fmt.Println("Hello World!")
