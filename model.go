@@ -5,6 +5,7 @@ type Config struct {
 	Entries map[string]string `json:"entries"`
 }
 
-type Service struct {
-	Data map[string]*Config
+type Group struct {
+	Id      string   `json:"id"`
+	Configs []Config `json:"configs"`
 }

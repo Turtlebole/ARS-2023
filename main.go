@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +13,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello World!")
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
@@ -22,13 +20,19 @@ func main() {
 	routerChan.StrictSlash(true)
 
 	server := configServer{
-		data: map[string]*Config{},
+		data:      map[string]*Config{},
+		groupData: map[string]*Group{},
 	}
-	routerChan.HandleFunc("/config/", server.createPostHandler).Methods("POST")
+	routerChan.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	routerChan.HandleFunc("/configs/", server.getAllHandler).Methods("GET")
-	routerChan.HandleFunc("/config/{id}/", server.getPostHandler).Methods("GET")
-	routerChan.HandleFunc("/config/{id}/", server.delPostHandler).Methods("DELETE")
-
+	routerChan.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
+	routerChan.HandleFunc("/config/{id}/", server.delConfigHandler).Methods("DELETE")
+	routerChan.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
+	routerChan.HandleFunc("/groups/", server.getAllHandler).Methods("GET")
+	routerChan.HandleFunc("/group/{id}/", server.getGroupHandler).Methods("GET")
+	routerChan.HandleFunc("/group/{id}/", server.delGroupHandler).Methods("DELETE")
+	routerChan.HandleFunc("/group/{groupId}/{id}/", server.addGroupConfig).Methods("PUT")
+	routerChan.HandleFunc("/group/{groupId}/config/{id}/", server.delGroupHandlerConfig).Methods("DELETE")
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: routerChan}
 	go func() {
