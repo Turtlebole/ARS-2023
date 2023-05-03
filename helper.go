@@ -19,6 +19,17 @@ func decodeBody(r io.Reader) (*Config, error) {
 	return &cfg, nil
 }
 
+func decodeGroup(r io.Reader) (*Group, error) {
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+
+	var g Group
+	if err := dec.Decode(&g); err != nil {
+		return nil, err
+	}
+	return &g, nil
+}
+
 func renderJSON(w http.ResponseWriter, v interface{}) {
 	js, err := json.Marshal(v)
 	if err != nil {
@@ -29,6 +40,7 @@ func renderJSON(w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }
+
 func createId() string {
 	return uuid.New().String()
 }
