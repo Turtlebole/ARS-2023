@@ -144,10 +144,10 @@ func (ts *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request
 	delete(ts.groupData, id)
 }
 
-func (cs *configServer) delConfigFromGroupHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *configServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.Request) {
 	groupId := mux.Vars(req)["groupId"]
 	id := mux.Vars(req)["id"]
-	group, ok := cs.groupData[groupId]
+	group, ok := ts.groupData[groupId]
 	if !ok {
 		err := errors.New("group not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -157,7 +157,7 @@ func (cs *configServer) delConfigFromGroupHandler(w http.ResponseWriter, req *ht
 	for i, config := range group.Configs {
 		if config.Id == id {
 			group.Configs = append(group.Configs[:i], group.Configs[i+1:]...)
-			cs.groupData[groupId] = group
+			ts.groupData[groupId] = group
 			return
 		}
 	}
