@@ -25,3 +25,7 @@ type RequestPostBody struct {
 	//  required: true
 	Body RequestPost `json:"body"`
 }
+
+type RequestPost struct {
+	Id string `json:"id"`
+}
