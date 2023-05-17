@@ -1,0 +1,224 @@
+basePath: /
+info:
+    description: 'Title: API-Chan'
+    title: API-Chan
+    version: 0.0.1
+paths:
+    /config/:
+        post:
+            description: Add a new config
+            operationId: createConfig
+            parameters:
+                - description: 'name: body'
+                  in: body
+                  name: body
+                  required: true
+                  schema: {}
+                  x-go-name: Body
+            responses:
+                "201":
+                    $ref: '#/responses/ResponseConfig'
+                "400":
+                    $ref: '#/responses/ErrorResponse'
+                "415":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+    /config/{id}/:
+        delete:
+            description: Delete config
+            operationId: delConfig
+            parameters:
+                - description: Config ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+            responses:
+                "204":
+                    $ref: '#/responses/NoContentResponse'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+        get:
+            description: Get config Id
+            operationId: getConfigId
+            parameters:
+                - description: Config ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+            responses:
+                "200":
+                    $ref: '#/responses/ResponseConfig'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+    /configs/:
+        get:
+            description: Get configs
+            operationId: getConfigs
+            responses:
+                "200":
+                    $ref: '#/responses/ResponseConfig'
+            tags:
+                - config
+    /group/:
+        post:
+            description: Add a new group
+            operationId: createGroup
+            parameters:
+                - description: 'name: body'
+                  in: body
+                  name: body
+                  required: true
+                  schema: {}
+                  x-go-name: Body
+            responses:
+                "201":
+                    $ref: '#/responses/ResponseGroup'
+                "400":
+                    $ref: '#/responses/ErrorResponse'
+                "415":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - group
+    /group/{id}/:
+        delete:
+            description: Delete group
+            operationId: delGroup
+            parameters:
+                - description: Group ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+            responses:
+                "204":
+                    $ref: '#/responses/NoContentResponse'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - group
+        get:
+            description: Get group Id
+            operationId: getGroupId
+            parameters:
+                - description: Group ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+            responses:
+                "200":
+                    $ref: '#/responses/ResponseGroup'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - group
+    /group/{id}/config/{id}/:
+        delete:
+            description: Delete config from group
+            operationId: delGroupConfig
+            parameters:
+                - description: |-
+                    Group ID
+                    Config ID
+                  in: path
+                  name: group-id
+                  required: true
+                  type: string
+                  x-go-name: GroupId
+                - in: query
+                  name: config-id
+                  type: string
+                  x-go-name: ConfigId
+            responses:
+                "204":
+                    $ref: '#/responses/NoContentResponse'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - group
+        put:
+            description: Add config to group
+            operationId: addGroupConfig
+            parameters:
+                - description: |-
+                    Group ID
+                    Config ID
+                  in: path
+                  name: group-id
+                  required: true
+                  type: string
+                  x-go-name: GroupId
+                - in: query
+                  name: config-id
+                  type: string
+                  x-go-name: ConfigId
+            responses:
+                "201":
+                    $ref: '#/responses/ResponseGroup'
+                "400":
+                    $ref: '#/responses/ErrorResponse'
+                "415":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - group
+    /groups/:
+        get:
+            description: Get all groups
+            operationId: getGroups
+            responses:
+                "200":
+                    $ref: '#/responses/ResponseGroup'
+            tags:
+                - group
+produces:
+    - application/json
+responses:
+    ErrorResponse:
+        description: ""
+        headers:
+            message:
+                description: |-
+                    Message of the error
+                    in: string
+                type: string
+            status:
+                description: |-
+                    Error status code
+                    in: int64
+                format: int64
+                type: integer
+    NoContentResponse:
+        description: ""
+    ResponseConfig:
+        description: ""
+        schema:
+            additionalProperties: {}
+            type: object
+    ResponseGroup:
+        description: ""
+        headers:
+            configs:
+                description: |-
+                    List of group configs
+                    in: []Config
+                items: {}
+                type: array
+            id:
+                description: |-
+                    Id of the group
+                    in: string
+                type: string
+schemes:
+    - http
+swagger: "2.0"
