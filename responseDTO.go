@@ -1,22 +1,24 @@
 package main
 
-// swagger:response ResponsePost
-type ResponsePost struct {
-	// Id of the post
+// swagger:response ResponseConfig
+type ResponseConfig struct {
+	// Id of the config
+	// in: body
+	Id string `json:"id"`
+	// Map of config entries
+	// in: body
+	Entries map[string]string `json:"entries"`
+}
+
+// swagger:response ResponseGroup
+type ResponseGroup struct {
+	// Id of the group
 	// in: string
 	Id string `json:"id"`
 
-	// Title of the post
-	// in: string
-	Title string `json:"title"`
-
-	// Text content of the post
-	// in: string
-	Text string `json:"text"`
-
-	// List of tags of the post
-	// in: []string
-	Tags []string `json:"tags"`
+	// List of group configs
+	// in: []Config
+	Configs []Config `json:"configs"`
 }
 
 // swagger:response ErrorResponse

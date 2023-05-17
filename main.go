@@ -1,6 +1,6 @@
-// Post API
+// API-Chan
 //
-//	Title: Post API
+//	Title: API-Chan
 //
 //	Schemes: http
 //	Version: 0.0.1
@@ -21,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
 )
 
@@ -45,6 +46,11 @@ func main() {
 	routerChan.HandleFunc("/group/{id}/", server.delGroupHandler).Methods("DELETE")
 	routerChan.HandleFunc("/group/{groupId}/{id}/", server.addGroupConfig).Methods("PUT")
 	routerChan.HandleFunc("/group/{groupId}/config/{id}/", server.delGroupHandlerConfig).Methods("DELETE")
+	routerChan.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
+	// SwaggerUI
+	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
+	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
+	routerChan.Handle("/docs", developerDocumentationHandler)
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: routerChan}
 	go func() {

@@ -13,6 +13,14 @@ type configServer struct {
 	groupData map[string]*Group // izigrava bazu podataka
 }
 
+// swagger:route POST /config/ config createConfig
+// Add a new config
+//
+// responses:
+//
+//	415: ErrorResponse
+//	400: ErrorResponse
+//	201: ResponseConfig
 func (ts *configServer) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
@@ -39,6 +47,12 @@ func (ts *configServer) createConfigHandler(w http.ResponseWriter, req *http.Req
 	renderJSON(w, rt)
 }
 
+// swagger:route GET /configs/ config getConfigs
+// Get configs
+//
+// responses:
+//
+//	200: []ResponseConfig
 func (ts *configServer) getAllHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []*Config{}
 	for _, v := range ts.data {
@@ -48,6 +62,13 @@ func (ts *configServer) getAllHandler(w http.ResponseWriter, req *http.Request) 
 	renderJSON(w, allTasks)
 }
 
+// swagger:route GET /config/{id}/ config getConfigId
+// Get config Id
+//
+// responses:
+//
+//	404: ErrorResponse
+//	200: ResponseConfig
 func (ts *configServer) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	task, ok := ts.data[id]
@@ -58,6 +79,14 @@ func (ts *configServer) getConfigHandler(w http.ResponseWriter, req *http.Reques
 	}
 	renderJSON(w, task)
 }
+
+// swagger:route DELETE /config/{id}/ config delConfig
+// Delete config
+//
+// responses:
+//
+//	404: ErrorResponse
+//	204: NoContentResponse
 func (ts *configServer) delConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	if v, ok := ts.data[id]; ok {
@@ -69,6 +98,14 @@ func (ts *configServer) delConfigHandler(w http.ResponseWriter, req *http.Reques
 	}
 }
 
+// swagger:route POST /group/ group createGroup
+// Add a new group
+//
+// responses:
+//
+//	415: ErrorResponse
+//	400: ErrorResponse
+//	201: ResponseGroup
 func (ts *configServer) createGroupHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
@@ -95,6 +132,14 @@ func (ts *configServer) createGroupHandler(w http.ResponseWriter, req *http.Requ
 	renderJSON(w, group)
 }
 
+// swagger:route PUT /group/{id}/config/{id}/ group addGroupConfig
+// Add config to group
+//
+// responses:
+//
+//	415: ErrorResponse
+//	400: ErrorResponse
+//	201: ResponseGroup
 func (ts *configServer) addGroupConfig(w http.ResponseWriter, req *http.Request) {
 	groupId := mux.Vars(req)["groupId"]
 	id := mux.Vars(req)["id"]
@@ -112,6 +157,12 @@ func (ts *configServer) addGroupConfig(w http.ResponseWriter, req *http.Request)
 	return
 }
 
+// swagger:route GET /groups/ group getGroups
+// Get all groups
+//
+// responses:
+//
+//	200: []ResponseGroup
 func (ts *configServer) getAllGroupsHandler(w http.ResponseWriter, req *http.Request) {
 	allGroups := []*Group{}
 	for _, v := range ts.groupData {
@@ -121,6 +172,13 @@ func (ts *configServer) getAllGroupsHandler(w http.ResponseWriter, req *http.Req
 	renderJSON(w, allGroups)
 }
 
+// swagger:route GET /group/{id}/ group getGroupId
+// Get group Id
+//
+// responses:
+//
+//	404: ErrorResponse
+//	200: ResponseGroup
 func (ts *configServer) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	task, ok := ts.groupData[id]
@@ -132,6 +190,13 @@ func (ts *configServer) getGroupHandler(w http.ResponseWriter, req *http.Request
 	renderJSON(w, task)
 }
 
+// swagger:route DELETE /group/{id}/ group delGroup
+// Delete group
+//
+// responses:
+//
+//	404: ErrorResponse
+//	204: NoContentResponse
 func (ts *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	_, ok := ts.groupData[id]
@@ -144,6 +209,13 @@ func (ts *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request
 	delete(ts.groupData, id)
 }
 
+// swagger:route DELETE /group/{id}/config/{id}/ group delGroupConfig
+// Delete config from group
+//
+// responses:
+//
+//	404: ErrorResponse
+//	204: NoContentResponse
 func (ts *configServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.Request) {
 	groupId := mux.Vars(req)["groupId"]
 	id := mux.Vars(req)["id"]
@@ -165,4 +237,8 @@ func (ts *configServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.R
 	err := errors.New("config not found in group")
 	http.Error(w, err.Error(), http.StatusNotFound)
 	return
+}
+
+func (ts *configServer) swaggerHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./swagger.yaml")
 }
