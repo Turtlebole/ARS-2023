@@ -21,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	ps "github.com/Turtlebole/ARS-2023/poststore"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
 )
@@ -32,9 +33,12 @@ func main() {
 	routerChan := mux.NewRouter()
 	routerChan.StrictSlash(true)
 
-	server := configServer{
-		data:      map[string]*Config{},
-		groupData: map[string]*Group{},
+	store, err := ps.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	server := postServer{
+		store: store,
 	}
 	routerChan.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	routerChan.HandleFunc("/configs/", server.getAllHandler).Methods("GET")
@@ -74,4 +78,5 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("server stopped")
+
 }

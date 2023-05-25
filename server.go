@@ -5,12 +5,15 @@ import (
 	"mime"
 	"net/http"
 
+	ps "github.com/Turtlebole/ARS-2023/poststore"
+
 	"github.com/gorilla/mux"
 )
 
-type configServer struct {
-	data      map[string]*Config
-	groupData map[string]*Group // izigrava bazu podataka
+type postServer struct {
+	store     *ps.PostStore
+	data      map[string]*ps.Config
+	groupData map[string]*ps.Group
 }
 
 // swagger:route POST /config/ config createConfig
@@ -21,7 +24,7 @@ type configServer struct {
 //	415: ErrorResponse
 //	400: ErrorResponse
 //	201: ResponseConfig
-func (ts *configServer) createConfigHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
@@ -34,16 +37,12 @@ func (ts *configServer) createConfigHandler(w http.ResponseWriter, req *http.Req
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
-
 	rt, err := decodeBody(req.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	id := createId()
-	rt.Id = id
-	ts.data[id] = rt
 	renderJSON(w, rt)
 }
 
@@ -53,12 +52,12 @@ func (ts *configServer) createConfigHandler(w http.ResponseWriter, req *http.Req
 // responses:
 //
 //	200: []ResponseConfig
-func (ts *configServer) getAllHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*Config{}
-	for _, v := range ts.data {
-		allTasks = append(allTasks, v)
+func (ts *postServer) getAllHandler(w http.ResponseWriter, req *http.Request) {
+	allTasks, err := ts.store.GetAll()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-
 	renderJSON(w, allTasks)
 }
 
@@ -69,12 +68,12 @@ func (ts *configServer) getAllHandler(w http.ResponseWriter, req *http.Request) 
 //
 //	404: ErrorResponse
 //	200: ResponseConfig
-func (ts *configServer) getConfigHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	task, ok := ts.data[id]
-	if !ok {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+	version := mux.Vars(req)["version"]
+	task, err := ts.store.Get(id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	renderJSON(w, task)
@@ -87,15 +86,16 @@ func (ts *configServer) getConfigHandler(w http.ResponseWriter, req *http.Reques
 //
 //	404: ErrorResponse
 //	204: NoContentResponse
-func (ts *configServer) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) delConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	if v, ok := ts.data[id]; ok {
-		delete(ts.data, id)
-		renderJSON(w, v)
-	} else {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+	version := mux.Vars(req)["version"]
+
+	msg, err := ts.store.Delete(id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+	renderJSON(w, msg)
 }
 
 // swagger:route POST /group/ group createGroup
@@ -106,7 +106,7 @@ func (ts *configServer) delConfigHandler(w http.ResponseWriter, req *http.Reques
 //	415: ErrorResponse
 //	400: ErrorResponse
 //	201: ResponseGroup
-func (ts *configServer) createGroupHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) createGroupHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
@@ -140,7 +140,7 @@ func (ts *configServer) createGroupHandler(w http.ResponseWriter, req *http.Requ
 //	415: ErrorResponse
 //	400: ErrorResponse
 //	201: ResponseGroup
-func (ts *configServer) addGroupConfig(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) addGroupConfig(w http.ResponseWriter, req *http.Request) {
 	groupId := mux.Vars(req)["groupId"]
 	id := mux.Vars(req)["id"]
 	task, ok := ts.data[id]
@@ -163,8 +163,8 @@ func (ts *configServer) addGroupConfig(w http.ResponseWriter, req *http.Request)
 // responses:
 //
 //	200: []ResponseGroup
-func (ts *configServer) getAllGroupsHandler(w http.ResponseWriter, req *http.Request) {
-	allGroups := []*Group{}
+func (ts *postServer) getAllGroupsHandler(w http.ResponseWriter, req *http.Request) {
+	allGroups := []*ps.Group{}
 	for _, v := range ts.groupData {
 		allGroups = append(allGroups, v)
 	}
@@ -179,7 +179,7 @@ func (ts *configServer) getAllGroupsHandler(w http.ResponseWriter, req *http.Req
 //
 //	404: ErrorResponse
 //	200: ResponseGroup
-func (ts *configServer) getGroupHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	task, ok := ts.groupData[id]
 	if !ok {
@@ -197,7 +197,7 @@ func (ts *configServer) getGroupHandler(w http.ResponseWriter, req *http.Request
 //
 //	404: ErrorResponse
 //	204: NoContentResponse
-func (ts *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) delGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	_, ok := ts.groupData[id]
 	if !ok {
@@ -216,7 +216,7 @@ func (ts *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request
 //
 //	404: ErrorResponse
 //	204: NoContentResponse
-func (ts *configServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.Request) {
+func (ts *postServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.Request) {
 	groupId := mux.Vars(req)["groupId"]
 	id := mux.Vars(req)["id"]
 	group, ok := ts.groupData[groupId]
@@ -239,6 +239,6 @@ func (ts *configServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.R
 	return
 }
 
-func (ts *configServer) swaggerHandler(w http.ResponseWriter, r *http.Request) {
+func (ts *postServer) swaggerHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./swagger.yaml")
 }
