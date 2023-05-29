@@ -21,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	ps "github.com/Turtlebole/ARS-2023/poststore"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
 )
@@ -32,9 +33,12 @@ func main() {
 	routerChan := mux.NewRouter()
 	routerChan.StrictSlash(true)
 
-	server := configServer{
-		data:      map[string]*Config{},
-		groupData: map[string]*Group{},
+	store, err := ps.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	server := postServer{
+		store: store,
 	}
 	routerChan.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	routerChan.HandleFunc("/configs/", server.getAllHandler).Methods("GET")
@@ -47,6 +51,8 @@ func main() {
 	routerChan.HandleFunc("/group/{groupId}/{id}/", server.addGroupConfig).Methods("PUT")
 	routerChan.HandleFunc("/group/{groupId}/config/{id}/", server.delGroupHandlerConfig).Methods("DELETE")
 	routerChan.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
+	routerChan.Path("/metrics").Handler(metricsHandler())
+
 	// SwaggerUI
 	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
 	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
@@ -74,4 +80,5 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("server stopped")
+
 }
