@@ -11,9 +11,9 @@ import (
 )
 
 type postServer struct {
-	store     *ps.PostStore
-	data      map[string]*ps.Config
-	groupData map[string]*ps.Group
+	store *ps.PostStore
+	//data      map[string]*ps.Config
+	//groupData map[string]*ps.Group
 }
 
 // swagger:route POST /config/ config createConfig
@@ -43,7 +43,11 @@ func (ts *postServer) createConfigHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	renderJSON(w, rt)
+	task, err := ts.store.Post(rt)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	renderJSON(w, task)
 }
 
 // swagger:route GET /configs/ config getConfigs
@@ -115,7 +119,7 @@ func (ts *postServer) createGroupHandler(w http.ResponseWriter, req *http.Reques
 	}
 
 	if mediatype != "application/json" {
-		err := errors.New("Expect application/json Content-Type")
+		err := errors.New("expect application/json Content-Type")
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
@@ -126,10 +130,11 @@ func (ts *postServer) createGroupHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	id := createId()
-	group.Id = id
-	ts.groupData[id] = group
-	renderJSON(w, group)
+	task, err := ts.store.PostGroup(group)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	renderJSON(w, task)
 }
 
 // swagger:route PUT /group/{id}/config/{id}/ group addGroupConfig
@@ -140,104 +145,101 @@ func (ts *postServer) createGroupHandler(w http.ResponseWriter, req *http.Reques
 //	415: ErrorResponse
 //	400: ErrorResponse
 //	201: ResponseGroup
-func (ts *postServer) addGroupConfig(w http.ResponseWriter, req *http.Request) {
-	groupId := mux.Vars(req)["groupId"]
-	id := mux.Vars(req)["id"]
-	task, ok := ts.data[id]
-	group, ook := ts.groupData[groupId]
-	if !ok || !ook {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+func (ts *postServer) addGroupConfigHandler(w http.ResponseWriter, req *http.Request) {
+	groupId := mux.Vars(req)["Id"]
+	configId := mux.Vars(req)["Id"]
+	err := ts.store.AddConfigToGroup(groupId, configId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	group.Configs = append(group.Configs, *task)
-	ts.groupData[groupId] = group
-
-	return
 }
 
-// swagger:route GET /groups/ group getGroups
-// Get all groups
+//	 swagger:route GET /groups/ group getGroups
+//	 Get all groups
 //
-// responses:
+//	 responses:
 //
-//	200: []ResponseGroup
+//		200: []ResponseGroup
 func (ts *postServer) getAllGroupsHandler(w http.ResponseWriter, req *http.Request) {
-	allGroups := []*ps.Group{}
-	for _, v := range ts.groupData {
-		allGroups = append(allGroups, v)
+	allGroups, err := ts.store.GetAllGroups()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	renderJSON(w, allGroups)
 }
 
-// swagger:route GET /group/{id}/ group getGroupId
-// Get group Id
+//	 swagger:route GET /group/{id}/ group getGroupId
+//	 Get group Id
 //
-// responses:
+//	 responses:
 //
-//	404: ErrorResponse
-//	200: ResponseGroup
+//		404: ErrorResponse
+//		200: ResponseGroup
 func (ts *postServer) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	task, ok := ts.groupData[id]
-	if !ok {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+
+	group, err := ts.store.GetGroupById(id, "")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	renderJSON(w, task)
+	renderJSON(w, group)
 }
 
-// swagger:route DELETE /group/{id}/ group delGroup
-// Delete group
-//
-// responses:
-//
-//	404: ErrorResponse
-//	204: NoContentResponse
+// // swagger:route DELETE /group/{id}/ group delGroup
+// // Delete group
+// //
+// // responses:
+// //
+// //	404: ErrorResponse
+// //	204: NoContentResponse
 func (ts *postServer) delGroupHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	_, ok := ts.groupData[id]
-	if !ok {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+	id := mux.Vars(req)["Id"]
+	version := mux.Vars(req)["version"]
+
+	msg, err := ts.store.DeleteGroup(id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	delete(ts.groupData, id)
+	renderJSON(w, msg)
 }
 
-// swagger:route DELETE /group/{id}/config/{id}/ group delGroupConfig
-// Delete config from group
-//
-// responses:
-//
-//	404: ErrorResponse
-//	204: NoContentResponse
-func (ts *postServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.Request) {
-	groupId := mux.Vars(req)["groupId"]
-	id := mux.Vars(req)["id"]
-	group, ok := ts.groupData[groupId]
-	if !ok {
-		err := errors.New("group not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
+// 	delete(ts.groupData, id)
+// }
 
-	for i, config := range group.Configs {
-		if config.Id == id {
-			group.Configs = append(group.Configs[:i], group.Configs[i+1:]...)
-			ts.groupData[groupId] = group
-			return
-		}
-	}
+// // swagger:route DELETE /group/{id}/config/{id}/ group delGroupConfig
+// // Delete config from group
+// //
+// // responses:
+// //
+// //	404: ErrorResponse
+// //	204: NoContentResponse
+// func (ts *postServer) delGroupHandlerConfig(w http.ResponseWriter, req *http.Request) {
+// 	groupId := mux.Vars(req)["groupId"]
+// 	id := mux.Vars(req)["id"]
+// 	group, ok := ts.groupData[groupId]
+// 	if !ok {
+// 		err := errors.New("group not found")
+// 		http.Error(w, err.Error(), http.StatusNotFound)
+// 		return
+// 	}
 
-	err := errors.New("config not found in group")
-	http.Error(w, err.Error(), http.StatusNotFound)
-	return
-}
+// 	for i, config := range group.Configs {
+// 		if config.Id == id {
+// 			group.Configs = append(group.Configs[:i], group.Configs[i+1:]...)
+// 			ts.groupData[groupId] = group
+// 			return
+// 		}
+// 	}
+
+// 	err := errors.New("config not found in group")
+// 	http.Error(w, err.Error(), http.StatusNotFound)
+// 	return
+// }
 
 func (ts *postServer) swaggerHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./swagger.yaml")

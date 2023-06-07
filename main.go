@@ -40,17 +40,19 @@ func main() {
 	server := postServer{
 		store: store,
 	}
-	routerChan.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
-	routerChan.HandleFunc("/configs/", server.getAllHandler).Methods("GET")
-	routerChan.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
-	routerChan.HandleFunc("/config/{id}/", server.delConfigHandler).Methods("DELETE")
-	routerChan.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
-	routerChan.HandleFunc("/groups/", server.getAllHandler).Methods("GET")
-	routerChan.HandleFunc("/group/{id}/", server.getGroupHandler).Methods("GET")
-	routerChan.HandleFunc("/group/{id}/", server.delGroupHandler).Methods("DELETE")
-	routerChan.HandleFunc("/group/{groupId}/{id}/", server.addGroupConfig).Methods("PUT")
-	routerChan.HandleFunc("/group/{groupId}/config/{id}/", server.delGroupHandlerConfig).Methods("DELETE")
+	routerChan.HandleFunc("/config/", count(server.createConfigHandler)).Methods("POST")
+	routerChan.HandleFunc("/configs/", count(server.getAllHandler)).Methods("GET")
+	routerChan.HandleFunc("/config/{id}/", count(server.getConfigHandler)).Methods("GET")
+	routerChan.HandleFunc("/config/{id}/", count(server.delConfigHandler)).Methods("DELETE")
+
+	routerChan.HandleFunc("/group/", count(server.createGroupHandler)).Methods("POST")
+	routerChan.HandleFunc("/groups/", count(server.getAllGroupsHandler)).Methods("GET")
+	routerChan.HandleFunc("/group/{id}/", count(server.getGroupHandler)).Methods("GET")
+	routerChan.HandleFunc("/group/{id}/config/{id}", count(server.addGroupConfigHandler)).Methods("PUT")
+	routerChan.HandleFunc("/group/{id}/", count(server.delGroupHandler)).Methods("DELETE")
+
 	routerChan.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
+	routerChan.Path("/metrics").Handler(metricsHandler())
 	// SwaggerUI
 	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
 	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
